@@ -1,43 +1,45 @@
 use std::{env::args, process::ExitCode, fs::File, io::Read};
 
-struct ArgValues {
-    hostname: Option<String>,
-    username: Option<String>,
-    password: Option<String>,
-    keys: Vec<String>,
-    number_of_keys: i32,
-    warning_max: Option<f64>,
-    warning_min: Option<f64>,
-    warning_inclusive: Option<i32>,
-    critical_max: Option<f64>,
-    critical_min: f64,
-    critical_inclusive: Option<i32>,
-    timeout: i64,
-    insecure_ssl: i32,
-    header: Option<String>,
-    debug: i32,
-    http_method: i32,
+pub struct ArgValues {
+    pub(crate) hostname: Option<String>,
+    pub(crate) username: Option<String>,
+    pub(crate) password: Option<String>,
+    pub(crate) keys: Vec<String>,
+    pub(crate) number_of_keys: i32,
+    pub(crate) warning_max: Option<f64>,
+    pub(crate) warning_min: Option<f64>,
+    pub(crate) warning_inclusive: Option<i32>,
+    pub(crate) critical_max: Option<f64>,
+    pub(crate) critical_min: f64,
+    pub(crate) critical_inclusive: Option<i32>,
+    pub(crate) timeout: i64,
+    pub(crate) insecure_ssl: i32,
+    pub(crate) header: Option<String>,
+    pub(crate) debug: i32,
+    pub(crate) http_method: i32,
 }
 
-pub fn validate_arguments() -> bool {
-    let mut arg_vals = ArgValues {
-        hostname: None,
-        username: None,
-        password: None,
-        keys: Vec::new(),
-        number_of_keys: 0,
-        warning_max: None,
-        warning_min: None,
-        warning_inclusive: None,
-        critical_max: None,
-        critical_min: 0.0,
-        critical_inclusive: None,
-        timeout: 10,
-        insecure_ssl: 0,
-        http_method: 0,
-        debug: 0,
-        header: None,
-    };
+pub fn validate_arguments(arg_vals: &mut ArgValues) -> bool {
+    // let mut arg_vals = ArgValues {
+    //     hostname: None,
+    //     username: None,
+    //     password: None,
+    //     keys: Vec::new(),
+    //     number_of_keys: 0,
+    //     warning_max: None,
+    //     warning_min: None,
+    //     warning_inclusive: None,
+    //     critical_max: None,
+    //     critical_min: 0.0,
+    //     critical_inclusive: None,
+    //     timeout: 10,
+    //     insecure_ssl: 0,
+    //     http_method: 0,
+    //     debug: 0,
+    //     header: None,
+    // };
+
+    // let arg_vals = *arg_val;
 
     // require arguments
     if args().len() == 1 {
@@ -50,34 +52,41 @@ pub fn validate_arguments() -> bool {
     for mut i in (1..args().len()).step_by(2) {
         if i < args().len() || (i == args().len() && lastArgHadNoInput) {
             // For --insecure and the like that have no nextArg
-            if (lastArgHadNoInput) {
+            if lastArgHadNoInput {
                 i = i - 1;
                 lastArgHadNoInput = false;
             }
 
             let mut arg = args().nth(i).unwrap();
-            let mut nextArg = args().nth(i + 1).unwrap();
+            
+            //get the next argument if it exists
+            let nextArg = if i + 1 < args().len() {
+                args().nth(i + 1).unwrap()
+            } else {
+                lastArgHadNoInput = true;
+                "".to_string()
+            };
 
             //remove '=' from argument if it exists
             arg = arg.replace("=", " ");
 
             //help message
             if arg == "--help" || arg == "-h" {
-                format!("{}", VERSION);
-                format!("{}", HELP);
+                println!("{}", VERSION);
+                println!("{}", HELP);
                 return false;
             }
 
             // Version 
             if arg == "--version" || arg == "-V" {
-                format!("{}", VERSION);
+                println!("{}", VERSION);
                 return false;
             }
 
             // Basic Auth - CLI
             if arg == "--auth-basic" || arg == "-b" {
               if nextArg.starts_with("-") {
-                format!("Invalid value for -b, --auth-basic. Must be a string of <username>:<password>\n\n{}", HELP);
+                print!("Invalid value for -b, --auth-basic. Must be a string of <username>:<password>\n\n{}", HELP);
                 return false;
               }
 
@@ -87,7 +96,7 @@ pub fn validate_arguments() -> bool {
               let password = auth.next().unwrap();
 
               if password == "" {
-                format!("Invalid value for -b, --auth-basic. Must be a string of <username>:<password>\n\n{}", HELP);
+                print!("Invalid value for -b, --auth-basic. Must be a string of <username>:<password>\n\n{}", HELP);
                 return false;
               }
 
@@ -100,7 +109,7 @@ pub fn validate_arguments() -> bool {
             //Basic Auth - File
             if arg == "--auth-basic-file" || arg == "-bf" {
               if nextArg.starts_with("-") {
-                format!("Invalid value for -bf, --auth-basic-file. Must be a file path. \n\n{}", HELP);
+                print!("Invalid value for -bf, --auth-basic-file. Must be a file path. \n\n{}", HELP);
                 return false;
               }
 
@@ -109,7 +118,7 @@ pub fn validate_arguments() -> bool {
               let mut file = match File::open(nextArg.clone()) {
                 Ok(file) => file,
                 Err(_) => {
-                  format!("Invalid value for -bf, --auth-basic-file. File does not exist. \n\n{}", HELP);
+                  print!("Invalid value for -bf, --auth-basic-file. File does not exist. \n\n{}", HELP);
                   return false;
                 }
               };
@@ -125,7 +134,7 @@ pub fn validate_arguments() -> bool {
               let password = auth.next().unwrap();
 
               if password == "" {
-                format!("Bad data in file '%s'. Verify the file has only one line and contains only '<username>:<password>'\n\n{}", HELP);
+                print!("Bad data in file '%s'. Verify the file has only one line and contains only '<username>:<password>'\n\n{}", HELP);
                 return false;
               }
               
@@ -136,7 +145,7 @@ pub fn validate_arguments() -> bool {
         // Hostname
         if arg == "--hostname" || arg == "-H" {
           if nextArg.starts_with("-") {
-            format!("Invalid value for -H, --hostname. Must be an IP address or URL\n\n{}", HELP);
+            print!("Invalid value for -H, --hostname. Must be an IP address or URL\n\n{}", HELP);
             return false;
           }
 
@@ -159,7 +168,7 @@ pub fn validate_arguments() -> bool {
         // JSON Key
         if arg == "--key" || arg == "-K" {
           if nextArg.starts_with("-") {
-            format!("Invalid value for -k, --key. This must be a comma-delimited list of strings.\n\n{}", HELP);
+            print!("Invalid value for -k, --key. This must be a comma-delimited list of strings.\n\n{}", HELP);
             return false;
           }
           for key in nextArg.split(",") {
@@ -171,7 +180,7 @@ pub fn validate_arguments() -> bool {
         // Warning threshold
         if arg == "--warning" || arg == "-w" {
           if nextArg.starts_with("-") {
-            format!("Invalid value for -w, --warning. See Nagios Plugin documentation.\n\n{}", HELP);
+            print!("Invalid value for -w, --warning. See Nagios Plugin documentation.\n\n{}", HELP);
             return false;
           }
 
@@ -184,14 +193,14 @@ pub fn validate_arguments() -> bool {
         // Timeout
         if arg == "--timeout" || arg == "-t" {
           if nextArg.starts_with("-") {
-            format!("Invalid value for -t, --timeout. Must be an integer.\n\n{}", HELP);
+            print!("Invalid value for -t, --timeout. Must be an integer.\n\n{}", HELP);
             return false;
           }
 
           let timeout = nextArg.parse::<i64>().unwrap();
 
           if timeout < 1 {
-            format!("Invalid value for -t, --timeout. Must be an integer greater than 0.\n\n{}", HELP);
+            print!("Invalid value for -t, --timeout. Must be an integer greater than 0.\n\n{}", HELP);
             return false;
           }
 
@@ -209,23 +218,23 @@ pub fn validate_arguments() -> bool {
         // HTTP Method
         if arg == "--http-method" || arg == "-m" {
           if nextArg.starts_with("-") {
-            format!("Invalid value for -m, --http-method. Must be a valid HTTP method.\n\n{}", HELP);
+            print!("Invalid value for -m, --http-method. Must be a valid HTTP method.\n\n{}", HELP);
             return false;
           }
 
-          nextArg = nextArg.to_uppercase();
+          let temp = nextArg.to_uppercase();
 
-          if nextArg == "GET" {
+          if temp == "GET" {
             arg_vals.http_method = 0;
           }
-          else if nextArg == "POST" {
+          else if temp == "POST" {
             arg_vals.http_method = 1;
           }
-          else if nextArg == "put"{
+          else if temp == "put"{
             arg_vals.http_method = 2;
           }
           else {
-            format!("Invalid value for -m, --http-method. Must be a valid HTTP method.\n\n{}", HELP);
+            print!("Invalid value for -m, --http-method. Must be a valid HTTP method.\n\n{}", HELP);
             return false;
           }
 
@@ -233,7 +242,7 @@ pub fn validate_arguments() -> bool {
         }
 
         // Bad argument
-        format!("Invalid argument: {}\n\n{}", arg, HELP);
+        print!("Invalid argument: {}\n\n{}", arg, HELP);
         return false;
     }
   }

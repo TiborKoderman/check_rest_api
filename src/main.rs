@@ -1,6 +1,12 @@
-use curl::easy::Easy;
+use curl::easy::{Easy, List};
 use serde_json::Value;
-use std::{env, io::{self, Write},process::ExitCode, time::Duration,};
+use std::{
+    env,
+    io::{self, stdout, Write},
+    process::ExitCode,
+    str,
+    time::Duration,
+};
 
 mod read_input;
 use read_input::*;
@@ -12,10 +18,8 @@ enum Status {
     Unknown,
 }
 
-
-
 fn main() {
-    let mut args  = read_input::ArgValues{
+    let mut args = read_input::ArgValues {
         hostname: None,
         username: None,
         password: None,
@@ -33,16 +37,23 @@ fn main() {
         debug: 0,
         header: None,
     };
-    
+
     if !read_input::validate_arguments(&mut args) {
         std::process::exit(Status::Unknown as i32);
     }
-    
-    call_curl(args);
-    println!("Hello, world!");
+
+    let (curl_res, curl_res_code) = call_curl(args);
+
+    //parse json
+    let v: Value = serde_json::from_str(&curl_res).unwrap(); 
+
+
+
+    println!("{curl_res}");
+
 }
 
-fn call_curl(args: ArgValues) {
+fn call_curl(args: ArgValues) -> (String, u32) {
     let mut easy = Easy::new();
 
     //set url
@@ -50,7 +61,8 @@ fn call_curl(args: ArgValues) {
         easy.url(&hostname).unwrap();
     }
     //set timeout
-    easy.timeout(Duration::new(args.timeout.try_into().unwrap(), 0)).unwrap();
+    easy.timeout(Duration::new(args.timeout.try_into().unwrap(), 0))
+        .unwrap();
 
     //if username and password are provided use basic auth
     if let Some(username) = args.username {
@@ -59,16 +71,43 @@ fn call_curl(args: ArgValues) {
             easy.password(&password).unwrap();
         }
     }
-    
 
+    //if header is set add it to the request
+    let mut headers = List::new();
+    if let Some(header) = args.header {
+        headers.append(&header).unwrap();
+        easy.http_headers(headers).unwrap();
+    }
 
-    let mut transfer = easy.transfer();
+    //if insecure ssl is set
+    if args.insecure_ssl == 1 {
+        easy.ssl_verify_host(false).unwrap();
+        easy.ssl_verify_peer(false).unwrap();
+    }
 
+    //if http method is set
+    if args.http_method == 1 {
+        easy.post(true).unwrap();
+        //Http server will allow POST requests with no parameters
+        easy.post_field_size(0).unwrap();
+    } else if args.http_method == 2 {
+        easy.custom_request("PUT").unwrap();
+    }
 
-    transfer.write_function(|data| { // vrite function
-        Ok(io::stdout().write(data).unwrap())
-    }).unwrap();
+    // let mut transfer = easy.transfer();
 
-    transfer.perform().unwrap();
-    // Ok(());
+    // let mut dst = Vec::new();
+
+    let mut response = Vec::new();
+    {
+        let mut transfer = easy.transfer();
+        transfer.write_function(|data| {
+            response.extend_from_slice(data);
+            Ok(data.len())
+        }).unwrap();
+        transfer.perform().unwrap();
+    }
+    let response_str = String::from_utf8(response).unwrap();
+    // print!("{}", response_str);
+    return (response_str, easy.response_code().unwrap());
 }

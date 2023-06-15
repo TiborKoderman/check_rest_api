@@ -1,22 +1,34 @@
-use std::{env::args, process::ExitCode, fs::File, io::Read};
+use std::{env::args, process::ExitCode, fs::File, io::{Read, Split}};
 
 pub struct ArgValues {
     pub(crate) hostname: Option<String>,
     pub(crate) username: Option<String>,
     pub(crate) password: Option<String>,
-    pub(crate) keys: Vec<String>,
+    // pub(crate) keys: Vec<String>,
     pub(crate) number_of_keys: i32,
-    pub(crate) warning_max: Option<f64>,
-    pub(crate) warning_min: Option<f64>,
-    pub(crate) warning_inclusive: Option<i32>,
-    pub(crate) critical_max: Option<f64>,
-    pub(crate) critical_min: f64,
-    pub(crate) critical_inclusive: Option<i32>,
+    // pub(crate) warning_max: Option<f64>,
+    // pub(crate) warning_min: Option<f64>,
+    // pub(crate) warning_inclusive: Option<i32>,
+    // pub(crate) critical_max: Option<f64>,
+    // pub(crate) critical_min: f64,
+    // pub(crate) critical_inclusive: Option<i32>,
+
+    pub(crate) keys: Vec<keyTreshCW>,
     pub(crate) timeout: i64,
     pub(crate) insecure_ssl: i32,
     pub(crate) header: Option<String>,
     pub(crate) debug: i32,
     pub(crate) http_method: i32,
+}
+
+pub struct keyTreshCW{
+  pub(crate) key: String,
+  pub(crate) warning_max: Option<f64>,
+  pub(crate) warning_min: Option<f64>,
+  pub(crate) warning_inclusive: bool,
+  pub(crate) critical_max: Option<f64>,
+  pub(crate) critical_min: Option<f64>,
+  pub(crate) critical_inclusive: Option<f64>
 }
 
 pub fn validate_arguments(arg_vals: &mut ArgValues) -> bool {
@@ -151,7 +163,15 @@ pub fn validate_arguments(arg_vals: &mut ArgValues) -> bool {
             return false;
           }
           for key in nextArg.split(",") {
-            arg_vals.keys.push(key.to_string());
+            arg_vals.keys.push(keyTreshCW{
+              key: key.to_string(),
+              warning_max: None,
+              warning_min: None,
+              warning_inclusive: false,
+              critical_max: None,
+              critical_min: None,
+              critical_inclusive: None
+            });
             arg_vals.number_of_keys += 1;
           }
           continue;
@@ -232,6 +252,120 @@ pub fn validate_arguments(arg_vals: &mut ArgValues) -> bool {
   }
   
   //TODO: implementation of validateArguments function
+
+
+
+fn parseWarningOrCriticalValues(value: String, typeOf: char, arg_vals: &mut ArgValues) -> i32{
+  if ['w','c'].contains(&typeOf){
+    return 0; 
+  }
+
+  let mut switchType;
+
+  if typeOf == 'w' {
+    switchType = "-w, --warning";
+  }
+  else {
+    switchType = "-c, --critical";
+  }
+
+  let numberOfTokens = 0;
+
+  let mut token: String;
+  let mut innerToken:String;
+
+  
+  loop {
+    token = value.split(",").next().unwrap().to_string();
+    if token == "" {
+      break;
+    }
+    if numberOfTokens > arg_vals.number_of_keys {
+      break;
+    }
+
+    let mut min: f64  = 0.0;
+    let mut max: f64 = 0.0;
+
+    let mut maxSet = false;
+    let mut numberOfColonTokens = 0;
+    let mut inclusive = false;
+    let mut endsWithColon = 0;
+
+    endsWithColon = token.ends_with(":") as i32;
+    loop{
+      innerToken = token.split(":").next().unwrap().to_string();
+      if innerToken == "" {
+        break;
+      }
+
+      //only allow one colon
+      if numberOfColonTokens > 1 {
+        print!("Invalid token '{}' in value '{}' for {}\n\n{}", innerToken, token, switchType, HELP);
+        return 0;
+      }
+
+      // prse min
+      if numberOfColonTokens == 0 {
+        if innerToken.chars().nth(0) == Some('@') {
+          inclusive = true;
+        }
+        else if innerToken.chars().nth(0) == Some('~') {
+          min = -f64::INFINITY;
+          if innerToken.len() != 1 {
+            print!("Invalid token '{:?}' in value '{}' for {}\n\n{}", innerToken.chars().nth(1), token, switchType, HELP);
+            return 0;
+          }
+        }
+
+        //build digit
+        min = min * 10.0 + innerToken.chars().nth(0).unwrap().to_digit(10).unwrap() as f64;
+      }
+
+      //parse max
+      if numberOfColonTokens == 1 {
+        if innerToken.chars().nth(0) == Some('@') {
+          inclusive = true;
+        }
+        else if innerToken.chars().nth(0) == Some('~') {
+          max = f64::INFINITY;
+          if innerToken.len() != 1 {
+            print!("Invalid token '{:?}' in value '{}' for {}\n\n{}", innerToken.chars().nth(1), token, switchType, HELP);
+            return 0;
+          }
+        }
+
+        //build digit
+        max = max * 10.0 + innerToken.chars().nth(0).unwrap().to_digit(10).unwrap() as f64;
+        maxSet = true;
+      }
+    }
+
+    if !maxSet {
+      max = f64::INFINITY;
+    }
+    else {
+        max = min;
+        min = 0.0;
+    }
+
+    if max <= min {
+      print!("Minimum threshold must be less than Maximum threshold\n");
+      return 0;
+    }
+
+    if(typeOf == 'w'){
+
+
+    }
+
+  }
+
+
+
+
+  return 0;
+}
 
 
 

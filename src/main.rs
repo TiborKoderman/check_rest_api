@@ -33,12 +33,12 @@ fn main() {
         password: None,
         keys: Vec::new(),
         number_of_keys: 0,
-        warning_max: None,
-        warning_min: None,
-        warning_inclusive: None,
-        critical_max: None,
-        critical_min: 0.0,
-        critical_inclusive: None,
+        // warning_max: None,
+        // warning_min: None,
+        // warning_inclusive: None,
+        // critical_max: None,
+        // critical_min: 0.0,
+        // critical_inclusive: None,
         timeout: 10,
         insecure_ssl: 0,
         http_method: 0,
@@ -62,7 +62,9 @@ fn main() {
     let json: Value = serde_json::from_str(&curl_res).unwrap();
 
 
-    // println!("{}", json.get("cpu").unwrap());
+
+
+    println!("{}", json.get("cpu").unwrap());
 
 }
 

@@ -2,7 +2,7 @@ use std::{env::args, fs::File, io::Read, process::ExitCode};
 
 use serde_json::{json, Value};
 
-use crate::read_input::ArgValues;
+use crate::read_input::{ArgValues, keyTreshCW};
 
 pub enum Status {
     Ok,
@@ -54,7 +54,7 @@ pub fn jsonKeyToPrefDataKey(key: &mut String) {
 
 pub fn checkHTTPBody(arg_vals: ArgValues, body: String) -> i32 {
     let numberOfKeys: i32 = arg_vals.number_of_keys;
-    let mut keys: Vec<String> = arg_vals.keys;
+    let mut keys: Vec<keyTreshCW> = arg_vals.keys;
 
     let mut severityLevel: Status = Status::Ok;
     let mut OKmessages: String = String::new();

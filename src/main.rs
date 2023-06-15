@@ -10,6 +10,8 @@ use std::{
     time::Duration,
 };
 
+#[cfg(test)]
+mod tests;
 
 mod read_input;
 use read_input::*;
@@ -50,12 +52,17 @@ fn main() {
 
     let (curl_res, curl_res_code) = call_curl(args);
 
-    //parse json
-    let v: Value = serde_json::from_str(&curl_res).unwrap(); 
+    //check if curl was successful
+    if curl_res_code != 200 {
+        println!("UNKNOWN - cURL call resulted in error: {}", curl_res_code);
+        std::process::exit(Status::Unknown as i32);
+    }
+
+    //get json from curl response
+    let json: Value = serde_json::from_str(&curl_res).unwrap();
 
 
-
-    println!("{curl_res}");
+    // println!("{}", json.get("cpu").unwrap());
 
 }
 
@@ -111,8 +118,12 @@ fn call_curl(args: ArgValues) -> (String, u32) {
             response.extend_from_slice(data);
             Ok(data.len())
         }).unwrap();
-        transfer.perform().unwrap();
-    }
+        if transfer.perform() != Ok(()) {
+            println!("Error: {}", transfer.perform().unwrap_err());
+            std::process::exit(Status::Unknown as i32);
+        }
+    } 
+
     let response_str = String::from_utf8(response).unwrap();
     // print!("{}", response_str);
     return (response_str, easy.response_code().unwrap());

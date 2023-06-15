@@ -19,7 +19,7 @@
                     "kind": "bin"
                 }
             },
-            "args": ["-b", "username:password", "-H", "google.com"],
+            "args": ["-H", "20.1.1.2/api/nagios/system/", "-K", "cpu"],
             "cwd": "${workspaceFolder}"
         },
         {

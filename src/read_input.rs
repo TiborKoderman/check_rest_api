@@ -154,6 +154,7 @@ pub fn validate_arguments(arg_vals: &mut ArgValues) -> bool {
             arg_vals.keys.push(key.to_string());
             arg_vals.number_of_keys += 1;
           }
+          continue;
         }
 
         // Warning threshold

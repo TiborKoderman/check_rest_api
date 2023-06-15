@@ -20,27 +20,6 @@ pub struct ArgValues {
 }
 
 pub fn validate_arguments(arg_vals: &mut ArgValues) -> bool {
-    // let mut arg_vals = ArgValues {
-    //     hostname: None,
-    //     username: None,
-    //     password: None,
-    //     keys: Vec::new(),
-    //     number_of_keys: 0,
-    //     warning_max: None,
-    //     warning_min: None,
-    //     warning_inclusive: None,
-    //     critical_max: None,
-    //     critical_min: 0.0,
-    //     critical_inclusive: None,
-    //     timeout: 10,
-    //     insecure_ssl: 0,
-    //     http_method: 0,
-    //     debug: 0,
-    //     header: None,
-    // };
-
-    // let arg_vals = *arg_val;
-
     // require arguments
     if args().len() == 1 {
         print!("Arguments Required!\n\n {}", HELP);

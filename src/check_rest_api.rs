@@ -1,3 +1,5 @@
+#![allow(non_snake_case)]
+
 use curl::easy::{Easy, List};
 use serde_json::Value;
 use std::{
@@ -8,8 +10,12 @@ use std::{
     time::Duration,
 };
 
+
 mod read_input;
 use read_input::*;
+
+mod check_thresholds;
+use check_thresholds::*;
 
 enum Status {
     Ok,

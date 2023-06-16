@@ -1,4 +1,4 @@
-use std::{env::args, process::ExitCode, fs::File, io::{Read, Split}};
+use std::{env::args, process::ExitCode, fs::File, io::{Read, Split}, clone};
 
 pub struct ArgValues {
     pub(crate) hostname: Option<String>,
@@ -28,7 +28,7 @@ pub struct keyTreshCW{
   pub(crate) warning_inclusive: bool,
   pub(crate) critical_max: Option<f64>,
   pub(crate) critical_min: Option<f64>,
-  pub(crate) critical_inclusive: Option<f64>
+  pub(crate) critical_inclusive: bool
 }
 
 pub fn validate_arguments(arg_vals: &mut ArgValues) -> bool {
@@ -170,7 +170,7 @@ pub fn validate_arguments(arg_vals: &mut ArgValues) -> bool {
               warning_inclusive: false,
               critical_max: None,
               critical_min: None,
-              critical_inclusive: None
+              critical_inclusive: false
             });
             arg_vals.number_of_keys += 1;
           }
@@ -184,10 +184,19 @@ pub fn validate_arguments(arg_vals: &mut ArgValues) -> bool {
             return false;
           }
 
-          // if (!parseWarningOrCriticalValues(nextArg, 'w')) {
-          //   return 0;
-          //    }
-          // return true;
+          parseWarningOrCriticalValues(nextArg, 'w', arg_vals);
+          continue;
+        }
+
+        // critical threshold
+        if arg == "--critical" || arg == "-c" {
+          if nextArg.starts_with("-") {
+            print!("Invalid value for -c, --critical. See Nagios Plugin documentation.\n\n{}", HELP);
+            return false;
+          }
+
+          parseWarningOrCriticalValues(nextArg, 'c', arg_vals);
+          continue;
         }
 
         // Timeout
@@ -255,7 +264,7 @@ pub fn validate_arguments(arg_vals: &mut ArgValues) -> bool {
 
 
 
-fn parseWarningOrCriticalValues(value: String, typeOf: char, arg_vals: &mut ArgValues) -> i32{
+fn parseWarningOrCriticalValues(values: String, typeOf: char, arg_vals: &mut ArgValues) -> i32{
   if ['w','c'].contains(&typeOf){
     return 0; 
   }
@@ -274,94 +283,87 @@ fn parseWarningOrCriticalValues(value: String, typeOf: char, arg_vals: &mut ArgV
   let mut token: String;
   let mut innerToken:String;
 
-  
-  loop {
-    token = value.split(",").next().unwrap().to_string();
-    if token == "" {
-      break;
-    }
-    if numberOfTokens > arg_vals.number_of_keys {
-      break;
-    }
-
-    let mut min: f64  = 0.0;
-    let mut max: f64 = 0.0;
-
-    let mut maxSet = false;
-    let mut numberOfColonTokens = 0;
-    let mut inclusive = false;
-    let mut endsWithColon = 0;
-
-    endsWithColon = token.ends_with(":") as i32;
-    loop{
-      innerToken = token.split(":").next().unwrap().to_string();
-      if innerToken == "" {
-        break;
-      }
-
-      //only allow one colon
-      if numberOfColonTokens > 1 {
-        print!("Invalid token '{}' in value '{}' for {}\n\n{}", innerToken, token, switchType, HELP);
-        return 0;
-      }
-
-      // prse min
-      if numberOfColonTokens == 0 {
-        if innerToken.chars().nth(0) == Some('@') {
-          inclusive = true;
-        }
-        else if innerToken.chars().nth(0) == Some('~') {
-          min = -f64::INFINITY;
-          if innerToken.len() != 1 {
-            print!("Invalid token '{:?}' in value '{}' for {}\n\n{}", innerToken.chars().nth(1), token, switchType, HELP);
-            return 0;
-          }
-        }
-
-        //build digit
-        min = min * 10.0 + innerToken.chars().nth(0).unwrap().to_digit(10).unwrap() as f64;
-      }
-
-      //parse max
-      if numberOfColonTokens == 1 {
-        if innerToken.chars().nth(0) == Some('@') {
-          inclusive = true;
-        }
-        else if innerToken.chars().nth(0) == Some('~') {
-          max = f64::INFINITY;
-          if innerToken.len() != 1 {
-            print!("Invalid token '{:?}' in value '{}' for {}\n\n{}", innerToken.chars().nth(1), token, switchType, HELP);
-            return 0;
-          }
-        }
-
-        //build digit
-        max = max * 10.0 + innerToken.chars().nth(0).unwrap().to_digit(10).unwrap() as f64;
-        maxSet = true;
-      }
-    }
-
-    if !maxSet {
-      max = f64::INFINITY;
-    }
-    else {
-        max = min;
-        min = 0.0;
-    }
-
-    if max <= min {
-      print!("Minimum threshold must be less than Maximum threshold\n");
-      return 0;
-    }
-
-    if(typeOf == 'w'){
-
-
-    }
-
+  //check if number of tokens is the same as number of keys
+  if numberOfTokens != arg_vals.number_of_keys {
+    print!("Invalid value for {}, --warning. Must be a comma-delimited list of numbers.\n\n{}", switchType, HELP);
+    return 1;
   }
 
 
+  //split every token by comma and save it in arg_vals keytreshcw
+  // Range definition 	Generate an alert if x...
+  // 10 	< 0 or > 10, (outside the range of {0 .. 10})
+  // 10: 	< 10, (outside {10 .. ∞})
+  // ~:10 	> 10, (outside the range of {-∞ .. 10})
+  // 10:20 	< 10 or > 20, (outside the range of {10 .. 20})
+  // @10:20 	≥ 10 and ≤ 20, (inside the range of {10 .. 20})
+
+  for (i, mut val) in values.split(",").enumerate(){
+    if val.starts_with('@'){
+      val = val.trim_start_matches('@');
+      if typeOf == 'w'{
+        arg_vals.keys[i].warning_inclusive = true;
+      }
+      else{
+        arg_vals.keys[i].critical_inclusive = true;
+      }
+    }
+
+    if val.contains(":"){
+      let mut innerTokens = val.split(":");
+      innerToken = innerTokens.next().unwrap().to_string();
+      if innerToken != "" {
+        if innerToken == "~" {
+          if typeOf == 'w'{
+            arg_vals.keys[i].warning_max = Some(f64::INFINITY)
+          }
+          else{
+            arg_vals.keys[i].critical_max = Some(f64::INFINITY)
+          }
+        }
+        else{
+          if typeOf == 'w'{
+            arg_vals.keys[i].warning_max = Some(innerToken.parse::<f64>().unwrap());
+          }
+          else{
+            arg_vals.keys[i].critical_max = Some(innerToken.parse::<f64>().unwrap());
+          }
+        }
+      }
+      innerToken = innerTokens.next().unwrap().to_string();
+      if innerToken != "" {
+        if innerToken == "~" {
+          if typeOf == 'w'{
+            arg_vals.keys[i].warning_min = Some(f64::NEG_INFINITY)
+          }
+          else{
+            arg_vals.keys[i].critical_min = Some(f64::NEG_INFINITY)
+          }
+        }
+        else{
+          if typeOf == 'w'{
+            arg_vals.keys[i].warning_min = Some(innerToken.parse::<f64>().unwrap());
+          }
+          else{
+            arg_vals.keys[i].critical_min = Some(innerToken.parse::<f64>().unwrap());
+          }
+        }
+      }
+    }
+    else {
+      if typeOf == 'w'{
+        arg_vals.keys[i].warning_max = Some(val.parse::<f64>().unwrap());
+        arg_vals.keys[i].warning_min = Some(0.0);
+      }
+      else{
+        arg_vals.keys[i].critical_max = Some(val.parse::<f64>().unwrap());
+        arg_vals.keys[i].critical_min = Some(0.0);
+      }
+    }
+    
+
+
+  }
 
 
   return 0;

@@ -264,8 +264,8 @@ pub fn validate_arguments(arg_vals: &mut ArgValues) -> bool {
 
 
 
-fn parseWarningOrCriticalValues(values: String, typeOf: char, arg_vals: &mut ArgValues) -> i32{
-  if ['w','c'].contains(&typeOf){
+fn parseWarningOrCriticalValues(values: String, typeOf: char,  arg_vals: &mut ArgValues) -> i32{
+  if !['w','c'].contains(&typeOf){
     return 0; 
   }
 
@@ -278,13 +278,13 @@ fn parseWarningOrCriticalValues(values: String, typeOf: char, arg_vals: &mut Arg
     switchType = "-c, --critical";
   }
 
-  let numberOfTokens = 0;
+  let numberOfTokens = values.split(",").count();
 
   let mut token: String;
   let mut innerToken:String;
 
   //check if number of tokens is the same as number of keys
-  if numberOfTokens != arg_vals.number_of_keys {
+  if numberOfTokens != arg_vals.number_of_keys as usize{
     print!("Invalid value for {}, --warning. Must be a comma-delimited list of numbers.\n\n{}", switchType, HELP);
     return 1;
   }
@@ -412,5 +412,4 @@ const HELP: &str = "Usage: check_rest_api [OPTIONS..]\n\nOptions:\n\
 -d, --debug\n\
   Enable trace mode for CURL communication\n\
 -k, --insecure\n\
-  Disables checking peer's SSL certificate (if using SSL/HTTPS). Not recommended to use\n\
-\nReport Bugs to: teeterwyatt@gmail.com\n";
+  Disables checking peer's SSL certificate (if using SSL/HTTPS). Not recommended to use\n";

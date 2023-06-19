@@ -1,6 +1,5 @@
 // use std::{env::args, fs::File, io::Read, process::ExitCode, clone};
 
-use std::fmt::format;
 
 use serde_json::Value;
 
@@ -77,8 +76,8 @@ pub fn checkHTTPBody(arg_vals: ArgValues, json: Value) -> u32 {
     let mut CRITICALmessages: String = String::new();
     let mut UNKNOWNmessages: String = String::new();
     let mut LONGmessages: String = String::new();
-    let mut FirstPrefMessage: String = String::new();
-    let mut OtherPrefMessages: String = String::new();
+    let mut FirstPerfMessage: String = String::new();
+    let mut OtherPerfMessages: String = String::new();
 
     for key in arg_vals.keys.iter().clone() {
         //if key is not in json, return unknown
@@ -181,15 +180,15 @@ pub fn checkHTTPBody(arg_vals: ArgValues, json: Value) -> u32 {
             }
 
             //Set perf data
-            //json key to pref data key
-            let mut prefDataKey = key.key.clone();
-            jsonKeyToPrefDataKey(&mut prefDataKey);
+            //json key to perf data key
+            let mut perfDataKey = key.key.clone();
+            jsonKeyToPrefDataKey(&mut perfDataKey);
 
-            let perfData = format!("'{}'={}\n", prefDataKey, val.clone());
-            if FirstPrefMessage.is_empty() {
-                FirstPrefMessage.push_str(&perfData);
+            let perfData = format!("{}={}\n", perfDataKey, val.clone());
+            if FirstPerfMessage.is_empty() {
+                FirstPerfMessage.push_str(&perfData);
             } else {
-                OtherPrefMessages.push_str(&perfData);
+                OtherPerfMessages.push_str(&perfData);
             }
         } else {
             // object not found
@@ -209,6 +208,7 @@ pub fn checkHTTPBody(arg_vals: ArgValues, json: Value) -> u32 {
         Status::Unknown => print!("UNKNOWN - "),
     }
 
+
     //Print evrything in order of UNKNOWN, CRITICAL, WARNING, OK
 
     //unknown
@@ -224,39 +224,40 @@ pub fn checkHTTPBody(arg_vals: ArgValues, json: Value) -> u32 {
 
     //critical
     if CRITICALmessages.len() > 2 && WARNINGmessages.len() == 0 && OKmessages.len() == 0 {
-        print!("{}", CRITICALmessages.split_off(CRITICALmessages.len() - 2));
+        //print without last two chars
+        print!("{}", CRITICALmessages[..CRITICALmessages.len() - 2].to_string());
     } else {
         print!("{}", CRITICALmessages);
     }
 
     //warning
     if WARNINGmessages.len() > 2 && OKmessages.len() == 0 {
-        print!("{}", WARNINGmessages.split_off(WARNINGmessages.len() - 2));
+        print!("{}", WARNINGmessages[..WARNINGmessages.len() - 2].to_string());
     } else {
         print!("{}", WARNINGmessages);
     }
 
     //ok
     if OKmessages.len() > 2 {
-        print!("{}", OKmessages.split_off(OKmessages.len() - 2));
+        print!("{}", OKmessages[..OKmessages.len() - 2].to_string());
     } else {
         print!("{}", OKmessages);
     }
 
     //Pref data - line 1
-    if FirstPrefMessage.len() > 0 {
-        print!(" | {}", FirstPrefMessage);
+    if FirstPerfMessage.len() > 0 {
+        print!(" | {}", FirstPerfMessage);
     } else {
         print!(" | \n");
     }
 
     //Long text descriptions
-    if OtherPrefMessages.len() > 0 {
+    if OtherPerfMessages.len() > 0 {
         print!("{} | ", LONGmessages);
     } else {
         print!("{}", LONGmessages);
     }
 
-    print!("{}", OtherPrefMessages);
+    print!("{}", OtherPerfMessages);
     return severityLevel as u32;
 }

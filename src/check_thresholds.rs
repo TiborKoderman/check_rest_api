@@ -202,10 +202,10 @@ pub fn checkHTTPBody(arg_vals: ArgValues, json: Value) -> u32 {
     }
     //Print the overriding status
     match severityLevel {
-        Status::Ok => print!("OK - "),
-        Status::Warning => print!("WARNING - "),
-        Status::Critical => print!("CRITICAL - "),
-        Status::Unknown => print!("UNKNOWN - "),
+        Status::Ok => print!("OK: "),
+        Status::Warning => print!("WARNING: "),
+        Status::Critical => print!("CRITICAL: "),
+        Status::Unknown => print!("UNKNOWN: "),
     }
 
 

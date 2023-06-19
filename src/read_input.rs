@@ -1,5 +1,6 @@
-use std::{env::args, process::ExitCode, fs::File, io::{Read, Split}, clone};
-
+#![allow(non_snake_case)]
+#![allow(non_camel_case_types)]
+use std::{env::args, fs::File, io::Read};
 pub struct ArgValues {
     pub(crate) hostname: Option<String>,
     pub(crate) username: Option<String>,
@@ -269,7 +270,7 @@ fn parseWarningOrCriticalValues(values: String, typeOf: char,  arg_vals: &mut Ar
     return 0; 
   }
 
-  let mut switchType;
+  let switchType;
 
   if typeOf == 'w' {
     switchType = "-w, --warning";
@@ -280,7 +281,6 @@ fn parseWarningOrCriticalValues(values: String, typeOf: char,  arg_vals: &mut Ar
 
   let numberOfTokens = values.split(",").count();
 
-  let mut token: String;
   let mut innerToken:String;
 
   //check if number of tokens is the same as number of keys

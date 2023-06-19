@@ -3,10 +3,7 @@
 use curl::easy::{Easy, List};
 use serde_json::Value;
 use std::{
-    env,
-    io::{self, stdout, Write},
-    process::ExitCode,
-    str,
+    // io::{self, stdout, Write},
     time::Duration,
 };
 
@@ -19,13 +16,6 @@ use read_input::*;
 mod check_thresholds;
 use check_thresholds::*;
 
-enum Status {
-    Ok,
-    Warning,
-    Critical,
-    Unknown,
-}
-
 fn main() {
     let mut args = read_input::ArgValues {
         hostname: None,
@@ -33,12 +23,6 @@ fn main() {
         password: None,
         keys: Vec::new(),
         number_of_keys: 0,
-        // warning_max: None,
-        // warning_min: None,
-        // warning_inclusive: None,
-        // critical_max: None,
-        // critical_min: 0.0,
-        // critical_inclusive: None,
         timeout: 10,
         insecure_ssl: 0,
         http_method: 0,
@@ -47,32 +31,33 @@ fn main() {
     };
 
     if !read_input::validate_arguments(&mut args) {
-        std::process::exit(Status::Unknown as i32);
+        std::process::exit(check_thresholds::Status::Unknown as i32);
     }
 
-    let (curl_res, curl_res_code) = call_curl(args);
+    let (curl_res, curl_res_code) = call_curl(&args);
 
     //check if curl was successful
     if curl_res_code != 200 {
         println!("UNKNOWN - cURL call resulted in error: {}", curl_res_code);
         std::process::exit(Status::Unknown as i32);
     }
+    let statusCode: u32;
+    if curl_res.is_empty() {
+        println!("UNKNOWN - cURL call resulted in empty response");
+        statusCode = checkHTTPStatusCode(curl_res_code);
+    } else {
+        let json: Value = serde_json::from_str(&curl_res).unwrap();
+        statusCode = checkHTTPBody(args, json);
+    }
 
-    //get json from curl response
-    let json: Value = serde_json::from_str(&curl_res).unwrap();
-
-
-
-
-    println!("{}", json.get("cpu").unwrap());
-
+    std::process::exit(statusCode as i32);
 }
 
-fn call_curl(args: ArgValues) -> (String, u32) {
+fn call_curl(args: &ArgValues) -> (String, u32) {
     let mut easy = Easy::new();
 
     //set url
-    if let Some(hostname) = args.hostname {
+    if let Some(hostname) = &args.hostname {
         easy.url(&hostname).unwrap();
     }
     //set timeout
@@ -80,8 +65,8 @@ fn call_curl(args: ArgValues) -> (String, u32) {
         .unwrap();
 
     //if username and password are provided use basic auth
-    if let Some(username) = args.username {
-        if let Some(password) = args.password {
+    if let Some(username) = &args.username {
+        if let Some(password) = &args.password {
             easy.username(&username).unwrap();
             easy.password(&password).unwrap();
         }
@@ -89,7 +74,7 @@ fn call_curl(args: ArgValues) -> (String, u32) {
 
     //if header is set add it to the request
     let mut headers = List::new();
-    if let Some(header) = args.header {
+    if let Some(header) = &args.header {
         headers.append(&header).unwrap();
         easy.http_headers(headers).unwrap();
     }

@@ -12,13 +12,28 @@ sudo apt install rust rustc cargo
 ### Other
 [Rust installation documentation](https://forge.rust-lang.org/infra/other-installation-methods.html)
 
-## Build
+## Install program
+Clone repository
+```sh
+git clone https://github.com/TiborKoderman/check_rest_api
+```
+
+CD into repository
+```sh
+cd check_rest_api
+```
+
+run `./install.sh`
+
+```sh
+chmod +x install.sh
+./install.sh
+```
+
+## build program
 ```sh
 cargo build --release
 ```
-
-## Install 
-run `./install.sh`
 
 ## Usage
 copy to the `libexec` directory of the nagios instalation, usually in `/usr/local/nagios/libexec`

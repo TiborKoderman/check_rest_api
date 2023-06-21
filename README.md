@@ -76,15 +76,3 @@ Usage for a Nagios Command will be nearly identical.
 # Check an API endpoint with HTTP Basic Auth (with file). The file ./test has one line with the string "username:password" to use for HTTP Basic Auth
 ./check_rest_api -H http://www.contoso.com --auth-basic-file ./test
 ```  
-
-## Compiling
-To compile the program from scratch:
-1. Clone/download this repository
-2. Verify the below dependencies are installed in addition to a C89-compliant compiler and `make`
-3. `cd` in the `src/` directory and run the command `make`
-4. `make` will compile the program called `check_rest_api`
-
-### Dependencies:
-`check_rest_api` has only two external dependencies:
-- [`libcurl`](https://curl.haxx.se/libcurl/) - for making HTTP/HTTPS calls and retrieving data from a REST API
-- [`JSON-C`](https://github.com/json-c/json-c) - for parsing JSON results from an API                                                                                                                                                                                                                       - Make sure your dependencies are installed                                                                                                                                                                                                  - `make`                 

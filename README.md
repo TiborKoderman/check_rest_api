@@ -52,7 +52,7 @@ define service{
 The below usage assumes you are running the program stand-alone on a command line.
 Usage for a Nagios Command will be nearly identical.
 | &nbsp; &nbsp;Name/Option &nbsp; &nbsp;  | Shorthand | Description  |
-|---|:-:|--|
+|---|:-:|---|
 | `--hostname` | `-H` | Full address to the REST API endpoint |
 | `--auth-basic` | `-b` | A string in the form `<username>:<password>` that is used for HTTP Basic Auth |
 | `--auth-basic-file` | `-bf` | Filepath to a file that contains one line in the format `<username>:<password>` that is used for HTTP Basic Auth
@@ -91,3 +91,12 @@ Usage for a Nagios Command will be nearly identical.
 # Check an API endpoint with HTTP Basic Auth (with file). The file ./test has one line with the string "username:password" to use for HTTP Basic Auth
 ./check_rest_api -H http://www.contoso.com --auth-basic-file ./test
 ```  
+#### Range definitions
+Range definition Generate an alert if x...
+| &nbsp; &nbsp;Notation &nbsp; &nbsp;  | Description  |
+|-------|--------------------------------------------------|
+| n 	| x < 0 or x > n, (outside the range of {0 .. 10}) |
+| n: 	| x < n, (outside {n .. ∞})|
+|~:n 	| x > n, (outside the range of {-∞ .. 10})| 
+| n:m | x < n or x > m, (outside the range of {10 .. 20})|
+| @n:m| x ≥ n and x ≤ m, (inside the range of {10 .. 20})|

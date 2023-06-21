@@ -329,6 +329,13 @@ fn parseWarningOrCriticalValues(values: String, typeOf: char,  arg_vals: &mut Ar
             arg_vals.keys[i].critical_min = Some(innerToken.parse::<f64>().unwrap());
           }
         }
+      } else {
+        if typeOf == 'w'{
+          arg_vals.keys[i].warning_min = Some(0.0);
+        }
+        else{
+          arg_vals.keys[i].critical_min = Some(0.0);
+        }
       }
       innerToken = innerTokens.next().unwrap().to_string();
       if innerToken != "" {

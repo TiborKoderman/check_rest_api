@@ -19,7 +19,7 @@
                     "kind": "bin"
                 }
             },
-            "args": "-H 20.1.1.2/api/nagios/process/ -K modbus,httpd,fems,archive -c 0:1,0:1,0:1,0:1",
+            "args": "-H 20.1.0.24/api/nagios/system/ -K time -w :1 -c 1:5",
             "cwd": "${workspaceFolder}"
         },
         {

@@ -315,25 +315,6 @@ fn parseWarningOrCriticalValues(values: String, typeOf: char,  arg_vals: &mut Ar
       if innerToken != "" {
         if innerToken == "~" {
           if typeOf == 'w'{
-            arg_vals.keys[i].warning_max = Some(f64::INFINITY)
-          }
-          else{
-            arg_vals.keys[i].critical_max = Some(f64::INFINITY)
-          }
-        }
-        else{
-          if typeOf == 'w'{
-            arg_vals.keys[i].warning_max = Some(innerToken.parse::<f64>().unwrap());
-          }
-          else{
-            arg_vals.keys[i].critical_max = Some(innerToken.parse::<f64>().unwrap());
-          }
-        }
-      }
-      innerToken = innerTokens.next().unwrap().to_string();
-      if innerToken != "" {
-        if innerToken == "~" {
-          if typeOf == 'w'{
             arg_vals.keys[i].warning_min = Some(f64::NEG_INFINITY)
           }
           else{
@@ -346,6 +327,25 @@ fn parseWarningOrCriticalValues(values: String, typeOf: char,  arg_vals: &mut Ar
           }
           else{
             arg_vals.keys[i].critical_min = Some(innerToken.parse::<f64>().unwrap());
+          }
+        }
+      }
+      innerToken = innerTokens.next().unwrap().to_string();
+      if innerToken != "" {
+        if innerToken == "~" {
+          if typeOf == 'w'{
+            arg_vals.keys[i].warning_max = Some(f64::INFINITY)
+          }
+          else{
+            arg_vals.keys[i].critical_max = Some(f64::INFINITY)
+          }
+        }
+        else{
+          if typeOf == 'w'{
+            arg_vals.keys[i].warning_max = Some(innerToken.parse::<f64>().unwrap());
+          }
+          else{
+            arg_vals.keys[i].critical_max = Some(innerToken.parse::<f64>().unwrap());
           }
         }
       }

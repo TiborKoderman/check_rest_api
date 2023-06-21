@@ -310,7 +310,16 @@ fn parseWarningOrCriticalValues(values: String, typeOf: char,  arg_vals: &mut Ar
     }
 
     if val.contains(":"){
+
+      
       let mut innerTokens = val.split(":");
+      //if innerTokens is longer than 2, then delete all tokens except the last two
+      if innerTokens.clone().count() > 2{
+        for _ in 0..innerTokens.clone().count()-2{
+          innerTokens.next();
+        }
+      }      
+
       innerToken = innerTokens.next().unwrap().to_string();
       if innerToken != "" {
         if innerToken == "~" {
